@@ -66,10 +66,14 @@ const MapPage = () => {
     const vectorSource = new VectorSource({
       format: new GeoJSON(),
       loader: async (extent, resolution, projection) => {
-        const data = await getFeatures();
-        const features = vectorSource?.getFormat()?.readFeatures(data, { dataProjection: "EPSG:4326", featureProjection: "EPSG:3857" });
-        if (features) {
-          vectorSource.addFeatures(features as Feature<Geometry>[]);
+        try {
+          const data = await getFeatures();
+          const features = vectorSource?.getFormat()?.readFeatures(data, { dataProjection: "EPSG:4326", featureProjection: "EPSG:3857" });
+          if (features) {
+            vectorSource.addFeatures(features as Feature<Geometry>[]);
+          }
+        } catch (error) {
+          console.error("Error loading features:", error);
         }
       },
     });
