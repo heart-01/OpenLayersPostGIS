@@ -118,39 +118,38 @@ const MapPage = () => {
       return;
     }
 
-    // const geojson = new GeoJSON().writeFeaturesObject(modifiedFeatures, {
-    //   dataProjection: "EPSG:4326",
-    //   featureProjection: "EPSG:3857",
-    // });
-
-    // console.log(geojson)
+    const geojson = new GeoJSON().writeFeaturesObject(modifiedFeatures, {
+      dataProjection: "EPSG:4326",
+      featureProjection: "EPSG:3857",
+    });
 
     const wfsTransaction = `<Transaction service="WFS" version="1.1.0"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xmlns:wfs="http://www.opengis.net/wfs"
-      xmlns:gml="http://www.opengis.net/gml"
-      xmlns:ogc="http://www.opengis.net/ogc"
-      xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
-      <Update typeName="test:test">
-          <Property>
-              <Name>plot_code</Name>
-              <Value>asia</Value>
-          </Property>
-          <Property>
-              <Value>
-                  <gml:Polygon srsName="EPSG:4326">
-                      <gml:exterior>
-                          <gml:LinearRing>
-                              <gml:posList>92.5977 26.09690000000002 94.7446 13.215199999999996 102.5199693320203 16.437438608579072 121.22370000000001 14.010400000000004 117.32739999999998 28.87999999999998 92.5977 26.09690000000002</gml:posList>
-                          </gml:LinearRing>
-                      </gml:exterior>
-                  </gml:Polygon>
-              </Value>
-          </Property>
-          <Filter>
-              <FeatureId fid="test.1"/>
-          </Filter>
-      </Update>
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:wfs="http://www.opengis.net/wfs"
+        xmlns:gml="http://www.opengis.net/gml"
+        xmlns:ogc="http://www.opengis.net/ogc"
+        xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+        <Update typeName="test:test"> 
+            <Property>
+                <Name>plot_code</Name>
+                <Value>asia</Value>
+            </Property>
+            <Property>
+                <Name>geometry</Name>  
+                <Value>
+                    <gml:Polygon srsName="EPSG:4326">
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>92.5977 26.0969 94.7446 13.2152 102.5199 16.4374 117.3274 28.8799 92.5977 26.0969</gml:posList> 
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Polygon>
+                </Value>
+            </Property>
+            <Filter>
+                <FeatureId fid="test.1"/> 
+            </Filter>
+        </Update>
     </Transaction>`;
 
     const config: AxiosRequestConfig = {
