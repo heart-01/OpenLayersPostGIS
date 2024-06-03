@@ -53,7 +53,7 @@ const MapPage = () => {
     const view = new View({
       center: fromLonLat([99, 14]),
       maxZoom: 19,
-      zoom: 12,
+      zoom: 2,
     });
 
     // Create reater layer
@@ -72,7 +72,6 @@ const MapPage = () => {
         try {
           const data = await getFeatures();
           const features = new GeoJSON()?.readFeatures(data, { dataProjection: "EPSG:4326", featureProjection: "EPSG:3857" });
-          console.log("🚀 ~ loader: ~ features:", features);
           if (features) {
             vectorSource.addFeatures(features as Feature<Geometry>[]);
           }
@@ -108,10 +107,23 @@ const MapPage = () => {
     map.addInteraction(modify);
 
     modify.on("modifyend", (event) => {
-      setModifiedFeatures(event.features.getArray().slice());
+      const features = event.features.getArray().slice();
+      setModifiedFeatures((prevFeatures) => {
+        const updatedFeatures = [...prevFeatures];
+        features.forEach((newFeature) => {
+          const featureIndex = updatedFeatures.findIndex((feature) => feature.getId() === newFeature.getId());
+          if (featureIndex > -1) {
+            updatedFeatures[featureIndex] = newFeature;
+          } else {
+            updatedFeatures.push(newFeature);
+          }
+        });
+        return updatedFeatures;
+      });
     });
   }, []);
 
+  // Save modified features
   const handleOnClickSave = async () => {
     if (modifiedFeatures.length === 0) {
       alert("No features modified.");
@@ -129,27 +141,34 @@ const MapPage = () => {
         xmlns:gml="http://www.opengis.net/gml"
         xmlns:ogc="http://www.opengis.net/ogc"
         xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
-        <Update typeName="test:test"> 
-            <Property>
-                <Name>plot_code</Name>
-                <Value>asia</Value>
-            </Property>
-            <Property>
-                <Name>geometry</Name>  
-                <Value>
-                    <gml:Polygon srsName="EPSG:4326">
-                        <gml:exterior>
-                            <gml:LinearRing>
-                                <gml:posList>92.5977 26.0969 94.7446 13.2152 102.5199 16.4374 117.3274 28.8799 92.5977 26.0969</gml:posList> 
-                            </gml:LinearRing>
-                        </gml:exterior>
-                    </gml:Polygon>
-                </Value>
-            </Property>
-            <Filter>
-                <FeatureId fid="test.1"/> 
-            </Filter>
-        </Update>
+        ${geojson.features
+          .map(
+            (feature: { properties: { plot_code: string }; geometry: { coordinates: number[][][] }; id: string }) =>
+              `<Update typeName="test:test">
+                <Property>
+                  <Name>plot_code</Name>
+                  <Value>${feature.properties.plot_code}</Value>
+                </Property>
+                <Property>
+                  <Name>geometry</Name>
+                  <Value>
+                      <gml:Polygon srsName="EPSG:4326">
+                          <gml:exterior>
+                              <gml:LinearRing>
+                                  <gml:posList>
+                                    ${feature.geometry.coordinates[0].map((coord: number[]) => coord.join(" ")).join(" ")}
+                                  </gml:posList>
+                              </gml:LinearRing>
+                          </gml:exterior>
+                      </gml:Polygon>
+                  </Value>
+                </Property>
+                <Filter>
+                  <FeatureId fid="${feature.id}"/>
+                </Filter>
+              </Update>`
+          )
+          .join("")}
     </Transaction>`;
 
     const config: AxiosRequestConfig = {
@@ -165,9 +184,6 @@ const MapPage = () => {
         alert("Features saved successfully.");
         setModifiedFeatures([]);
         console.log(response.data);
-      } else {
-        console.error("Error saving features:", response);
-        alert("Error saving features.");
       }
     } catch (error) {
       console.error("Error saving features:", error);
